@@ -52,7 +52,7 @@ def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None],
     return window_list
 
 
-file_names = glob.glob('./non-car/nocar00*.jpg')
+file_names = glob.glob('./non-car/nocar*.jpg')
 i = 0
 for name in file_names:
     image = cv2.imread(name)
