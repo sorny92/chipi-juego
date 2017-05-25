@@ -10,7 +10,7 @@ import skvideo.io
 from keras.models import load_model
 
 
-model = load_model('model_v2.h5')
+model = load_model('model.h5')
 
 # Define a function that takes an image,
 # start and stop positions in both x and y, 
@@ -107,5 +107,5 @@ def test_images(origin):
         plt.imshow(image)
         plt.pause(2)
 
-test_images('./test_images/*')
-#process_video('test_video.mp4')
+#test_images('./test_images/*')
+process_video('project_video.mp4')

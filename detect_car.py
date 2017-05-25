@@ -86,7 +86,7 @@ def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
 
 def process_video(video):
     vid = skvideo.io.vreader(video)
-    writer = skvideo.io.FFmpegWriter('{}_output.mp4'.format(video), verbosity=1)
+    writer = skvideo.io.FFmpegWriter('{}_output.mp4'.format(video[:-4]), verbosity=1)
     for frame in vid:
         output, heatmap = find_cars(frame,(400,656), 1, svc, X_scaler, 9, 8, 2,(16, 16), 16)
         labels = label(heatmap)
@@ -160,7 +160,7 @@ def find_cars(img, y_start_stop, scale, svc, X_scaler, orient, pix_per_cell, cel
                 cv2.rectangle(draw_img,(xbox_left, ytop_draw+y_start_stop[0]),(xbox_left+win_draw,ytop_draw+win_draw+y_start_stop[0]),(0,0,255),6) 
                 heat_boxes.append([(xbox_left, ytop_draw+y_start_stop[0]),(xbox_left+win_draw,ytop_draw+win_draw+y_start_stop[0])])
     heatmap = add_heat(heatmap, heat_boxes)
-    heatmap = apply_threshold(heatmap, 4)
+    heatmap = apply_threshold(heatmap, 2)
     return draw_img, heatmap
 
 def add_heat(heatmap, bbox_list):
@@ -224,4 +224,4 @@ def test_images(origin):
         plt.pause(2)
 
 #test_images('./test_images/*')
-process_video('test_video.mp4')
+process_video('project_video.mp4')
