@@ -83,7 +83,9 @@ I decided to use a window to detect cars between the pixel 400 and 656 in the ve
 
 #### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
-Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  You can see the images in the next part with 6 examples.
+Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  You can see the images in the next part with 6 examples.  
+
+To improve the detection of cars in the CNN version I use a multi-scale and multi-window search which allow me to find the car when it is smaller (located in the foreground).
 ---
 
 ### Video Implementation
