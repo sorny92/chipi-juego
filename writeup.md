@@ -1,4 +1,4 @@
-**Vehicle Detection Project**
+# Vehicle Detection Project
 
 The goals / steps of this project are the following:
 
@@ -35,8 +35,8 @@ You're reading it!
 
 #### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
-The code for this step is contained in the file train_classifer.py. Between the lines 17 and 40. Where you can see two methods. The first one `get\_hog\_features` which has the call to the hog method from sklearn. 
-Then the method `generate\_hog\_features` which takes the frames do the next:
+The code for this step is contained in the file train_classifer.py. Between the lines 17 and 40. Where you can see two methods. The first one `get_hog_features` which has the call to the hog method from sklearn. 
+Then the method `generate_hog_features` which takes the frames do the next:
 * convert them to YCrCb color space
 * Get hog features for every channel
 * Append them in an array
