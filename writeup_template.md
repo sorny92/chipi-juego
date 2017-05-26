@@ -121,5 +121,11 @@ In the bottom-right the output in that frame.
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+Firstly I decided to use only HOG features in the grayscale image which I tough it could work. It gave me an accuracy of the 99% which I though it was wonderful, but it end up generating to much noise in the image so I decided to use HOG features in all the channels.  
+Then I tested different color spaces which gave me the higher accuracy, which end up being th YCrCb.
+Firstly I was using the KITTI dataset too, but using it didn't help to detect the cars correctly. Then is when I decided to use a deep learning approach. Using all my dataset was able to get the results you can see in the output video of the CNN.
+
+The solution can be improved with easing between the frames for every labeled car. Then reduce the window for detection in the zone around the car is detected.
+
+Then use an initial window in the horizont and in the parts where a car could appear because we know that a car is not going to appear suddenly in the middle of the road so we don't need to check if there is a car in front of us if it wasn't there in the last frame.
 
