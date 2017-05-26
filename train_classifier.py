@@ -26,6 +26,19 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block, vis=False, featu
                        visualise=False, feature_vector=feature_vec)
         return features
 
+def generate_hog_features(image):
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
+    hog_features = []
+    for channel in range(image.shape[2]):
+        hog_features.append(get_hog_features(image[:,:,channel], 
+                            orient, pix_per_cell, cell_per_block, 
+                            vis=False, feature_vec=True))
+    hog_features = np.ravel(hog_features)
+    spatial_features = bin_spatial(image, size=spatial_size)
+    hist_features = color_hist(image, nbins=hist_bins)
+    features = np.hstack((spatial_features, hist_features, hog_features))
+    return features
+
 image_names_car = glob.glob('./vehicles/GTI*/*')
 image_names_no_car = glob.glob('./no-car64/*')
 print('Images with cars: {}'.format(len(image_names_car)))
@@ -47,16 +60,7 @@ else:
     print('Generating car features from file...')
     for name in image_names_car:
         image = cv2.imread(name)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
-        hog_features = []
-        for channel in range(image.shape[2]):
-            hog_features.append(get_hog_features(image[:,:,channel], 
-                                orient, pix_per_cell, cell_per_block, 
-                                vis=False, feature_vec=True))
-        hog_features = np.ravel(hog_features)
-        spatial_features = bin_spatial(image, size=spatial_size)
-        hist_features = color_hist(image, nbins=hist_bins)
-        features = np.hstack((spatial_features, hist_features, hog_features))
+        features = generate_hog_features(image)
         #print(features.shape)
         car_features.append(features)
     with open(car_features_file, 'wb') as f:
@@ -72,16 +76,7 @@ else:
     print('Generating no_car features from file...')
     for name in image_names_no_car:
         image = cv2.imread(name)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
-        hog_features = []
-        for channel in range(image.shape[2]):
-            hog_features.append(get_hog_features(image[:,:,channel], 
-                                orient, pix_per_cell, cell_per_block, 
-                                vis=False, feature_vec=True))
-        hog_features = np.ravel(hog_features)
-        spatial_features = bin_spatial(image, size=spatial_size)
-        hist_features = color_hist(image, nbins=hist_bins)
-        features = np.hstack((spatial_features, hist_features, hog_features))
+        features = generate_hog_features(image)
         no_car_features.append(features)
     with open(no_car_features_file, 'wb') as f:
         pickle.dump(no_car_features, f)

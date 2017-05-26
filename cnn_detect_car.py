@@ -8,6 +8,7 @@ from skimage.feature import hog
 from extra_function import *
 import skvideo.io
 from keras.models import load_model
+from scipy.ndimage.measurements import label
 
 
 model = load_model('model.h5')
@@ -70,13 +71,19 @@ def process_video(video):
     writer = skvideo.io.FFmpegWriter('{}_output.mp4'.format(video), verbosity=1)
     for frame in vid:
         #output = find_cars(frame,(400,656), 1, svc, X_scaler, 9, 8, 2,(16, 16), 16)
-        output = detect_car(frame, (400,656))
+        cars_image = np.copy(frame)
+        #image = find_cars(image,(400,656), 1, svc, X_scaler, 9, 8, 2,(16, 16), 16)
+        image, heatmap = detect_car(frame,(400,656))
+        labels = label(heatmap)
+        cars_image = draw_labeled_bboxes(cars_image, labels)
 #        plt.imshow(img)
 #        plt.pause(0.01)
-        writer.writeFrame(output)
+        writer.writeFrame(cars_image)
     writer.close()
 
 def detect_car(image, y_start_stop):
+    heatmap = np.zeros((image[:,:,0].shape))
+    heat_boxes = []
     xy_window = (128, 128)
     windows = slide_window(image, y_start_stop=y_start_stop, xy_window=xy_window, xy_overlap=(0.7, 0.7))
     xy_window = (64, 64)
@@ -91,8 +98,42 @@ def detect_car(image, y_start_stop):
             #print(test_prediction)
             if test_prediction != 0:
                 image = cv2.rectangle(image,(window[0][0], window[0][1]),(window[1][0],window[1][1]),(0,0,255),2) 
+                heat_boxes.append([(window[0][0], window[0][1]),(window[1][0],window[1][1])])
+    heatmap = add_heat(heatmap, heat_boxes)
+    heatmap = apply_threshold(heatmap, 1)
     #image = draw_boxes(image, windows, color=(0, 255, 0), thick=2)
-    return image
+    return image, heatmap
+
+def add_heat(heatmap, bbox_list):
+    # Iterate through list of bboxes
+    for box in bbox_list:
+        # Add += 1 for all pixels inside each bbox
+        # Assuming each "box" takes the form ((x1, y1), (x2, y2))
+        heatmap[box[0][1]:box[1][1], box[0][0]:box[1][0]] += 1
+
+    # Return updated heatmap
+    return heatmap# Iterate through list of bboxes
+    
+def apply_threshold(heatmap, threshold):
+    # Zero out pixels below the threshold
+    heatmap[heatmap <= threshold] = 0
+    # Return thresholded map
+    return heatmap
+
+def draw_labeled_bboxes(img, labels):
+    # Iterate through all detected cars
+    for car_number in range(1, labels[1]+1):
+        # Find pixels with each car_number label value
+        nonzero = (labels[0] == car_number).nonzero()
+        # Identify x and y values of those pixels
+        nonzeroy = np.array(nonzero[0])
+        nonzerox = np.array(nonzero[1])
+        # Define a bounding box based on min/max x and y
+        bbox = ((np.min(nonzerox), np.min(nonzeroy)), (np.max(nonzerox), np.max(nonzeroy)))
+        # Draw the box on the image
+        cv2.rectangle(img, bbox[0], bbox[1], (0,0,255), 6)
+    # Return the image
+    return img
 
 def test_images(origin):
     image_names = glob.glob(origin)
@@ -102,9 +143,12 @@ def test_images(origin):
         i += 1
         image = cv2.imread(name)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        cars_image = np.copy(image)
         #image = find_cars(image,(400,656), 1, svc, X_scaler, 9, 8, 2,(16, 16), 16)
-        image = detect_car(image,(400,656))
-        plt.imshow(image)
+        image, heatmap = detect_car(image,(400,656))
+        labels = label(heatmap)
+        cars_image = draw_labeled_bboxes(cars_image, labels)
+        plt.imshow(cars_image)
         plt.pause(2)
 
 #test_images('./test_images/*')

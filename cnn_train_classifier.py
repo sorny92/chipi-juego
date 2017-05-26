@@ -32,13 +32,13 @@ for name in image_names_no_car:
 print('Loaded')
 
 car_features = sklearn.utils.shuffle(car_features)
-car_features = car_features[:5000]
+car_features = car_features[:4000]
 y = np.hstack((np.ones(len(car_features)),np.zeros(len(no_car_features))))
 X = np.vstack((car_features, no_car_features)).astype(np.float64)
 print(X[0].shape)
 X, y = sklearn.utils.shuffle(X, y)
 
-X_train, y_train, X_test, y_test = train_test_split(X, y, test_size=0.2)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
 def generator(x, y, batch_size=32):
     num_samples = len(samples)

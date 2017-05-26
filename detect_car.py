@@ -160,7 +160,7 @@ def find_cars(img, y_start_stop, scale, svc, X_scaler, orient, pix_per_cell, cel
                 cv2.rectangle(draw_img,(xbox_left, ytop_draw+y_start_stop[0]),(xbox_left+win_draw,ytop_draw+win_draw+y_start_stop[0]),(0,0,255),6) 
                 heat_boxes.append([(xbox_left, ytop_draw+y_start_stop[0]),(xbox_left+win_draw,ytop_draw+win_draw+y_start_stop[0])])
     heatmap = add_heat(heatmap, heat_boxes)
-    heatmap = apply_threshold(heatmap, 2)
+    heatmap = apply_threshold(heatmap, 3)
     return draw_img, heatmap
 
 def add_heat(heatmap, bbox_list):
@@ -221,7 +221,7 @@ def test_images(origin):
         plt.imshow(cars_image, cmap='gray')
         plt.title('Labels')
         fig.tight_layout()
-        plt.pause(2)
+        plt.pause(5)
 
-#test_images('./test_images/*')
-process_video('project_video.mp4')
+test_images('./test_images/*')
+#process_video('project_video.mp4')
