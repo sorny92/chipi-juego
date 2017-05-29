@@ -1,4 +1,4 @@
-**Vehicle Detection Project**
+# Vehicle Detection Project
 
 The goals / steps of this project are the following:
 
@@ -35,8 +35,8 @@ You're reading it!
 
 #### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
-The code for this step is contained in the file train_classifer.py. Between the lines 17 and 40. Where you can see two methods. The first one `get\_hog\_features` which has the call to the hog method from sklearn. 
-Then the method `generate\_hog\_features` which takes the frames do the next:
+The code for this step is contained in the file train_classifer.py. Between the lines 17 and 40. Where you can see two methods. The first one `get_hog_features` which has the call to the hog method from sklearn. 
+Then the method `generate_hog_features` which takes the frames do the next:
 * convert them to YCrCb color space
 * Get hog features for every channel
 * Append them in an array
@@ -85,7 +85,9 @@ Also in the CNN version I apply a multi-scale window system because of this way 
 
 #### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
-Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  You can see the images in the next part with 6 examples.
+Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  You can see the images in the next part with 6 examples.  
+
+To improve the detection of cars in the CNN version I use a multi-scale and multi-window search which allow me to find the car when it is smaller (located in the foreground).
 ---
 
 ### Video Implementation
