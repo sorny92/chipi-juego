@@ -8,6 +8,7 @@ from skimage.feature import hog
 from extra_function import *
 import skvideo.io
 from scipy.ndimage.measurements import label
+from collections import deque
 
 with open('linearSVC.model', 'rb') as f:
     svc = pickle.load(f)
@@ -27,9 +28,6 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block, vis=False, featu
                        cells_per_block=(cell_per_block, cell_per_block), transform_sqrt=False, 
                        visualise=False, feature_vector=feature_vec)
         return features
-
-def train_color_classifier():
-    pass
 
 # Define a function that takes an image,
 # start and stop positions in both x and y, 
@@ -87,8 +85,16 @@ def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
 def process_video(video):
     vid = skvideo.io.vreader(video)
     writer = skvideo.io.FFmpegWriter('{}_output.mp4'.format(video[:-4]), verbosity=1)
+    heatmap_hist = deque()
     for frame in vid:
         output, heatmap = find_cars(frame,(400,656), 1, svc, X_scaler, 9, 8, 2,(16, 16), 16)
+        heatmap_hist.append(heatmap)
+        if(len(heatmap_hist) > 3):
+            heatmap_hist.popleft()
+        
+        heatmap = sum(heatmap_hist)
+        #print(heatmap.shape)
+        heatmap = apply_threshold(heatmap, 5)
         labels = label(heatmap)
         frame = draw_labeled_bboxes(frame, labels)
         writer.writeFrame(frame)
@@ -160,7 +166,6 @@ def find_cars(img, y_start_stop, scale, svc, X_scaler, orient, pix_per_cell, cel
                 cv2.rectangle(draw_img,(xbox_left, ytop_draw+y_start_stop[0]),(xbox_left+win_draw,ytop_draw+win_draw+y_start_stop[0]),(0,0,255),6) 
                 heat_boxes.append([(xbox_left, ytop_draw+y_start_stop[0]),(xbox_left+win_draw,ytop_draw+win_draw+y_start_stop[0])])
     heatmap = add_heat(heatmap, heat_boxes)
-    heatmap = apply_threshold(heatmap, 3)
     return draw_img, heatmap
 
 def add_heat(heatmap, bbox_list):
@@ -223,5 +228,5 @@ def test_images(origin):
         fig.tight_layout()
         plt.pause(5)
 
-test_images('./test_images/*')
-#process_video('project_video.mp4')
+#test_images('./test_images/*')
+process_video('project_video.mp4')

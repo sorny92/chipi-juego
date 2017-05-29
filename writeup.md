@@ -81,6 +81,8 @@ The SVC model needs filtering between frames to ease the output of the process.
 
 I decided to use a window to detect cars between the pixel 400 and 656 in the vertical axis. This is due because under the 670 you can see part of the car and above the 400 pixels you will not find any car.
 
+Also in the CNN version I apply a multi-scale window system because of this way I can select the cars in different distances and also it helps to get rid of false positives because usually I will get in the same place several matches as car. This will appear in as a hotspot in the heatmap.
+
 #### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
 Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  You can see the images in the next part with 6 examples.
@@ -96,6 +98,8 @@ Here's a [link to my video result with CNN](./output_images/project_video_CNN.mp
 #### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
 I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
+
+This behavour is also applied in time, this means I'm storing the last 3 heatmaps so I can take in account the movement of the cars in time. This fact will helpt me to get rid of false positives because if there is a false positive in a lonely frame it will not appear.
 
 Here's an example result showing the heatmap from a series of frames of video, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last frame of video:
 
@@ -113,8 +117,6 @@ In the bottom-right the output in that frame.
 ![alt text][figure6]
 
 
-
-
 ---
 
 ### Discussion
@@ -124,6 +126,8 @@ In the bottom-right the output in that frame.
 Firstly I decided to use only HOG features in the grayscale image which I tough it could work. It gave me an accuracy of the 99% which I though it was wonderful, but it end up generating to much noise in the image so I decided to use HOG features in all the channels.  
 Then I tested different color spaces which gave me the higher accuracy, which end up being th YCrCb.
 Firstly I was using the KITTI dataset too, but using it didn't help to detect the cars correctly. Then is when I decided to use a deep learning approach. Using all my dataset was able to get the results you can see in the output video of the CNN.
+
+Still with the efforts tuning the parameters with the computer vision approach, using CNN was easier to solve the problem and with better results with the downpoint of the computer power need to process it. But the power of GPUs is increasing really fast which is making possible to detect in real time with architectures as YOLO.
 
 The solution can be improved with easing between the frames for every labeled car. Then reduce the window for detection in the zone around the car is detected.
 
