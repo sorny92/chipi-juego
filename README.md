@@ -1,4 +1,5 @@
 # Vehicle Detection
+[![CarND-Vehicle-Detection - SDC](http://i.makeagif.com/media/7-03-2017/fahV03.gif)](https://youtu.be/cdRn3OD5VT0)   
 [![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
 ## [Here you can find the Writeup](https://github.com/sorny92/CarND-VehicleDetection/blob/master/writeup.md)
