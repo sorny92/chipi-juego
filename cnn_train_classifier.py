@@ -51,12 +51,18 @@ for name in images_rock:
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     rock_features.append(image)
 
+print (len(background_features))
+print (len(ball_features))
+print (len(box_features))
+print (len(hole_features))
+print (len(rock_features))
+
 y = np.hstack((
-    np.ones(len(background_features)), 
-    np.ones(len(ball_features)), 
-    np.ones(len(box_features)), 
-    np.ones(len(hole_features)), 
-    np.ones(len(rock_features))))
+    np.ones(len(background_features))*0, 
+    np.ones(len(ball_features))*1, 
+    np.ones(len(box_features))*2, 
+    np.ones(len(hole_features))*3, 
+    np.ones(len(rock_features))*4))
 #y.reshape((-1,1))
 X = np.vstack((background_features, ball_features, box_features, hole_features, rock_features)).astype(np.float64)
 print(X.shape)
@@ -65,8 +71,8 @@ X, y = sklearn.utils.shuffle(X, y)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
-BATCH_SIZE = 2
-EPOCHS = 10
+BATCH_SIZE = 64
+EPOCHS = 20
 
 ch, row, col = 3, 24, 24
 
@@ -103,9 +109,9 @@ model.add(Dense(10))
 model.add(Dense(5))
 model.add(Activation('relu'))
 
-model.compile(loss='categorical_crossentropy', optimizer='adam')
+model.compile(loss='sparse_categorical_crossentropy', optimizer='adam')
 model.fit(X_train, y_train, batch_size = BATCH_SIZE, epochs=EPOCHS, validation_split=0.2)
 score = model.evaluate(X_test, y_test, batch_size=BATCH_SIZE)
 print (score)
-print (model.predict(X_test[1,:]))
+#print (model.predict(X_test[1,:]))
 model.save('model.h5')
