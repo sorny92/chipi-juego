@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from skimage.feature import hog
 from extra_function import *
-import skvideo.io
 from keras.models import load_model
 from scipy.ndimage.measurements import label
 
@@ -81,28 +80,42 @@ def process_video(video):
         writer.writeFrame(cars_image)
     writer.close()
 
-def detect_car(image, y_start_stop):
+def detect_car(image):
     heatmap = np.zeros((image[:,:,0].shape))
     heat_boxes = []
-    xy_window = (128, 128)
-    windows = slide_window(image, y_start_stop=y_start_stop, xy_window=xy_window, xy_overlap=(0.7, 0.7))
-    xy_window = (64, 64)
-    windows += slide_window(image, y_start_stop=y_start_stop, xy_window=xy_window, xy_overlap=(0.5, 0.5))
+    xy_window = (24, 24)
+    lower = np.array([75,130,140], dtype = "uint8")
+    upper = np.array([85,144,150], dtype = "uint8")
+
+    mask = cv2.inRange(image, lower, upper)
+    boundary_image = cv2.bitwise_and(image, image, mask=mask)
+    boundary_image = cv2.dilate(boundary_image, np.ones((5,5),np.uint8), iterations = 1)
+    boundary_image = cv2.erode(boundary_image, np.ones((7,7),np.uint8), iterations = 1)
+    boundary_image = cv2.dilate(boundary_image, np.ones((62,62),np.uint8), iterations = 1)
+    boundary_image = cv2.erode(boundary_image, np.ones((60,60),np.uint8), iterations = 1)
+    #boundary_image = cv2.Canny(boundary_image, 60,100)
+    boundary_image = np.float32(cv2.cvtColor(boundary_image, cv2.COLOR_BGR2GRAY))
+    boundary_image = cv2.cornerHarris(boundary_image, 10, 9, 0.04)
+    aux = np.copy(boundary_image)
+    aux[boundary_image<250]=0
+    aux[boundary_image<200]=255
+    boundary_image = np.hstack((boundary_image, aux))
+    boundary_image = cv2.dilate(boundary_image,None)
+    windows = slide_window(image, xy_window=xy_window, xy_overlap=(0, 0))
     image_analize = np.copy(image)
-    for window in windows:
+    '''for window in windows:
         window_image = image_analize[window[0][1]:window[1][1],window[0][0]:window[1][0]]
         if(window_image.shape[0] >= xy_window[0] and window_image.shape[1] >= xy_window[1]):
-            if (window_image.shape[0] > 64 or window_image.shape[1] > 64):
-                window_image = cv2.resize(window_image, (64, 64))
+            window_image = cv2.resize(window_image, (24, 24))
             test_prediction = model.predict(window_image[None, :, :, :])
-            #print(test_prediction)
+            print (test_prediction)
             if test_prediction != 0:
                 image = cv2.rectangle(image,(window[0][0], window[0][1]),(window[1][0],window[1][1]),(0,0,255),2) 
                 heat_boxes.append([(window[0][0], window[0][1]),(window[1][0],window[1][1])])
     heatmap = add_heat(heatmap, heat_boxes)
-    heatmap = apply_threshold(heatmap, 1)
-    #image = draw_boxes(image, windows, color=(0, 255, 0), thick=2)
-    return image, heatmap
+    heatmap = apply_threshold(heatmap, 1)'''
+    image = draw_boxes(image, windows, color=(0, 255, 0), thick=2)
+    return boundary_image, heatmap
 
 def add_heat(heatmap, bbox_list):
     # Iterate through list of bboxes
@@ -145,11 +158,11 @@ def test_images(origin):
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         cars_image = np.copy(image)
         #image = find_cars(image,(400,656), 1, svc, X_scaler, 9, 8, 2,(16, 16), 16)
-        image, heatmap = detect_car(image,(400,656))
+        image, heatmap = detect_car(image)
         labels = label(heatmap)
         cars_image = draw_labeled_bboxes(cars_image, labels)
-        plt.imshow(cars_image)
-        plt.pause(2)
+        plt.imshow(image, cmap='gray')
+        plt.pause(50)
 
-#test_images('./test_images/*')
-process_video('project_video.mp4')
+test_images('/home/esteve/chipi-juego/examples/WhatsApp Image 2017-09-13 at 22.03.23(1).jpeg')
+#process_video('project_video.mp4')
