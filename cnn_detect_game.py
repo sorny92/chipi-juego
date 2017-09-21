@@ -101,6 +101,10 @@ def detect_car(image):
     aux[boundary_image<200]=255
     boundary_image = np.hstack((boundary_image, aux))
     boundary_image = cv2.dilate(boundary_image,None)
+    # Loop over the image in vertical bars of width x
+    #take the smallest and the higest positions wich are 255
+    #do the same in horizontal bars of height x
+    # the smalles of both is the point1 and the highest of both is the point2
     windows = slide_window(image, xy_window=xy_window, xy_overlap=(0, 0))
     image_analize = np.copy(image)
     '''for window in windows:
