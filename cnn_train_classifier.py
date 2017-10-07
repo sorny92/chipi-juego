@@ -51,17 +51,17 @@ for name in images_rock:
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     rock_features.append(image)
 
-print (len(background_features))
-print (len(ball_features))
-print (len(box_features))
-print (len(hole_features))
-print (len(rock_features))
+print(len(background_features))
+print(len(ball_features))
+print(len(box_features))
+print(len(hole_features))
+print(len(rock_features))
 
 y = np.hstack((
-    np.ones(len(background_features))*0, 
-    np.ones(len(ball_features))*1, 
-    np.ones(len(box_features))*2, 
-    np.ones(len(hole_features))*3, 
+    np.ones(len(background_features))*0,
+    np.ones(len(ball_features))*1,
+    np.ones(len(box_features))*2,
+    np.ones(len(hole_features))*3,
     np.ones(len(rock_features))*4))
 #y.reshape((-1,1))
 X = np.vstack((background_features, ball_features, box_features, hole_features, rock_features)).astype(np.float64)
@@ -71,8 +71,8 @@ X, y = sklearn.utils.shuffle(X, y)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
-BATCH_SIZE = 64
-EPOCHS = 20
+BATCH_SIZE = 16
+EPOCHS = 100
 
 ch, row, col = 3, 24, 24
 
@@ -85,27 +85,24 @@ model.add(Lambda(preprocess, input_shape=(row, col, ch)))
 
 model.add(Conv2D(24, (5, 5)))
 model.add(Activation('relu'))
-#model.add(Dropout(0.4))
 
 model.add(Conv2D(36, (5, 5)))
 model.add(Activation('relu'))
-#model.add(Dropout(0.4))
 
 model.add(Conv2D(48, (3, 3)))
 model.add(Activation('relu'))
-#model.add(Dropout(0.4))
 
 model.add(Conv2D(64, (3, 3)))
 model.add(Activation('relu'))
-#model.add(Dropout(0.4))
 
 model.add(Conv2D(64, (3, 3), strides=(2,2)))
 model.add(Activation('relu'))
 
 model.add(Flatten())
 model.add(Dense(40))
-#model.add(Dropout(0.4))
+model.add(Dropout(0.3))
 model.add(Dense(10))
+model.add(Dropout(0.3))
 model.add(Dense(5))
 model.add(Activation('relu'))
 

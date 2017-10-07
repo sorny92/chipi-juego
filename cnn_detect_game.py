@@ -4,7 +4,6 @@ import glob
 import pickle
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
-from skimage.feature import hog
 from extra_function import *
 from keras.models import load_model
 from scipy.ndimage.measurements import label
