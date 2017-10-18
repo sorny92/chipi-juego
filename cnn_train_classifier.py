@@ -23,47 +23,47 @@ ball_features = []
 box_features = []
 hole_features = []
 rock_features = []
-
+images = []
+labels = []
 for name in images_background:
     image = cv2.imread(name)
     image = cv2.resize(image, (24,24))
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     background_features.append(image)
+    labels.append(0)
     
 for name in images_ball:
     image = cv2.imread(name)
     image = cv2.resize(image, (24,24))
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     ball_features.append(image)
+    labels.append(1)
 for name in images_box:
     image = cv2.imread(name)
     image = cv2.resize(image, (24,24))
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     box_features.append(image)
+    labels.append(2)
 for name in images_hole:
     image = cv2.imread(name)
     image = cv2.resize(image, (24,24))
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     hole_features.append(image)
+    labels.append(3)
 for name in images_rock:
     image = cv2.imread(name)
     image = cv2.resize(image, (24,24))
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     rock_features.append(image)
-
+    labels.append(4)
+from keras.utils.np_utils import to_categorical
+y = to_categorical(labels)
 print(len(background_features))
 print(len(ball_features))
 print(len(box_features))
 print(len(hole_features))
 print(len(rock_features))
 
-y = np.hstack((
-    np.ones(len(background_features))*0,
-    np.ones(len(ball_features))*1,
-    np.ones(len(box_features))*2,
-    np.ones(len(hole_features))*3,
-    np.ones(len(rock_features))*4))
-#y.reshape((-1,1))
 X = np.vstack((background_features, ball_features, box_features, hole_features, rock_features)).astype(np.float64)
 print(X.shape)
 print(y.shape)
@@ -71,8 +71,8 @@ X, y = sklearn.utils.shuffle(X, y)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
-BATCH_SIZE = 16
-EPOCHS = 100
+BATCH_SIZE = 12
+EPOCHS = 50
 
 ch, row, col = 3, 24, 24
 
@@ -106,7 +106,7 @@ model.add(Dropout(0.3))
 model.add(Dense(5))
 model.add(Activation('relu'))
 
-model.compile(loss='sparse_categorical_crossentropy', optimizer='adam')
+model.compile(loss='categorical_crossentropy', optimizer='adam')
 model.fit(X_train, y_train, batch_size = BATCH_SIZE, epochs=EPOCHS, validation_split=0.2)
 score = model.evaluate(X_test, y_test, batch_size=BATCH_SIZE)
 print (score)

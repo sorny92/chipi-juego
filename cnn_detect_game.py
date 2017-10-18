@@ -7,7 +7,9 @@ from sklearn.preprocessing import StandardScaler
 from extra_function import *
 from keras.models import load_model
 from scipy.ndimage.measurements import label
-
+import os
+import random
+os.environ['CUDA_VISIBLE_DEVICES'] = ''
 
 model = load_model('model.h5')
 
@@ -64,25 +66,9 @@ def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
     # Return the image copy with boxes drawn
     return imcopy
 
-def process_video(video):
-    vid = skvideo.io.vreader(video)
-    writer = skvideo.io.FFmpegWriter('{}_output.mp4'.format(video), verbosity=1)
-    for frame in vid:
-        #output = find_cars(frame,(400,656), 1, svc, X_scaler, 9, 8, 2,(16, 16), 16)
-        cars_image = np.copy(frame)
-        #image = find_cars(image,(400,656), 1, svc, X_scaler, 9, 8, 2,(16, 16), 16)
-        image, heatmap = detect_car(frame,(400,656))
-        labels = label(heatmap)
-        cars_image = draw_labeled_bboxes(cars_image, labels)
-#        plt.imshow(img)
-#        plt.pause(0.01)
-        writer.writeFrame(cars_image)
-    writer.close()
-
 def detect_car(image):
     heatmap = np.zeros((image[:,:,0].shape))
     heat_boxes = []
-    xy_window = (24, 24)
     lower = np.array([75,130,140], dtype = "uint8")
     upper = np.array([85,144,150], dtype = "uint8")
 
@@ -98,27 +84,46 @@ def detect_car(image):
     aux = np.copy(boundary_image)
     aux[boundary_image<250]=0
     aux[boundary_image<200]=255
-    boundary_image = np.hstack((boundary_image, aux))
     boundary_image = cv2.dilate(boundary_image,None)
     # Loop over the image in vertical bars of width x
     #take the smallest and the higest positions wich are 255
     #do the same in horizontal bars of height x
     # the smalles of both is the point1 and the highest of both is the point2
-    windows = slide_window(image, xy_window=xy_window, xy_overlap=(0, 0))
+    points = np.argwhere(boundary_image>100)
+    p1 = [min(points[:,0]),min(points[:,1])]
+    p2 = [max(points[:,0]),max(points[:,1])]
+
+    print p1, p2
+
+    xy_window = ((p2[0]-p1[0])/15, 
+                 (p2[0]-p1[0])/15)
+    x_start_stop = [p1[1],p2[1]]
+    y_start_stop = [p1[0],p2[0]]
+    windows = slide_window(image, 
+            x_start_stop=x_start_stop,
+            y_start_stop=y_start_stop,
+            xy_window=xy_window, 
+            xy_overlap=(0, 0))
     image_analize = np.copy(image)
-    '''for window in windows:
+    results = []
+    for window in windows:
         window_image = image_analize[window[0][1]:window[1][1],window[0][0]:window[1][0]]
         if(window_image.shape[0] >= xy_window[0] and window_image.shape[1] >= xy_window[1]):
             window_image = cv2.resize(window_image, (24, 24))
             test_prediction = model.predict(window_image[None, :, :, :])
-            print (test_prediction)
-            if test_prediction != 0:
+            #print test_prediction, window
+            #random.seed(np.argmax(test_prediction))
+            c = 50*np.argmax(test_prediction)
+            
+            image_analize = cv2.rectangle(image_analize, window[0], window[1], (c,c*2,c*3), -1)
+            '''if test_prediction != 0:
                 image = cv2.rectangle(image,(window[0][0], window[0][1]),(window[1][0],window[1][1]),(0,0,255),2) 
-                heat_boxes.append([(window[0][0], window[0][1]),(window[1][0],window[1][1])])
+                heat_boxes.append([(window[0][0], window[0][1]),(window[1][0],window[1][1])])'''
     heatmap = add_heat(heatmap, heat_boxes)
-    heatmap = apply_threshold(heatmap, 1)'''
-    image = draw_boxes(image, windows, color=(0, 255, 0), thick=2)
-    return boundary_image, heatmap
+    heatmap = apply_threshold(heatmap, 1)
+    image_analize = draw_boxes(image_analize, windows, color=(0, 255, 0), thick=2)
+    print results
+    return image_analize, heatmap
 
 def add_heat(heatmap, bbox_list):
     # Iterate through list of bboxes
