@@ -9,6 +9,7 @@ from keras.models import load_model
 from scipy.ndimage.measurements import label
 import os
 import random
+from PIL import Image
 os.environ['CUDA_VISIBLE_DEVICES'] = ''
 
 model = load_model('model.h5')
@@ -67,6 +68,7 @@ def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
     return imcopy
 
 def detect_car(image):
+    colors = [(0,0,0), (0,0,125), (200,200,0), (255,255,255), (0,255,0), (0,255,255)]
     heatmap = np.zeros((image[:,:,0].shape))
     heat_boxes = []
     lower = np.array([75,130,140], dtype = "uint8")
@@ -106,16 +108,19 @@ def detect_car(image):
             xy_overlap=(0, 0))
     image_analize = np.copy(image)
     results = []
+    count = 0
     for window in windows:
         window_image = image_analize[window[0][1]:window[1][1],window[0][0]:window[1][0]]
         if(window_image.shape[0] >= xy_window[0] and window_image.shape[1] >= xy_window[1]):
             window_image = cv2.resize(window_image, (24, 24))
             test_prediction = model.predict(window_image[None, :, :, :])
-            #print test_prediction, window
+            print test_prediction, window
             #random.seed(np.argmax(test_prediction))
-            c = 50*np.argmax(test_prediction)
-            
-            image_analize = cv2.rectangle(image_analize, window[0], window[1], (c,c*2,c*3), -1)
+            c = colors[np.argmax(test_prediction)]
+            #im = Image.fromarray(window_image)
+            #im.save("your_file{}.jpeg".format(count))
+            count +=1
+            image_analize = cv2.rectangle(image_analize, window[0], window[1], c, -1)
             '''if test_prediction != 0:
                 image = cv2.rectangle(image,(window[0][0], window[0][1]),(window[1][0],window[1][1]),(0,0,255),2) 
                 heat_boxes.append([(window[0][0], window[0][1]),(window[1][0],window[1][1])])'''
