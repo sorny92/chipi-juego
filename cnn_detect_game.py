@@ -10,6 +10,8 @@ from scipy.ndimage.measurements import label
 import os
 import random
 from PIL import Image
+
+# ONLY CPU
 os.environ['CUDA_VISIBLE_DEVICES'] = ''
 
 model = load_model('model.h5')
@@ -67,99 +69,78 @@ def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
     # Return the image copy with boxes drawn
     return imcopy
 
-def detect_car(image):
+def detect_objects(image, return_image=False):
     colors = [(0,0,0), (0,0,125), (200,200,0), (255,255,255), (0,255,0), (0,255,255)]
-    heatmap = np.zeros((image[:,:,0].shape))
-    heat_boxes = []
+
+    # Threshold to get the outer color of the game
     lower = np.array([75,130,140], dtype = "uint8")
     upper = np.array([85,144,150], dtype = "uint8")
-
     mask = cv2.inRange(image, lower, upper)
+
+    # Create binay mask
     boundary_image = cv2.bitwise_and(image, image, mask=mask)
+
+    # Cleaning up noise from the image with a serio of dilations and erosions
     boundary_image = cv2.dilate(boundary_image, np.ones((5,5),np.uint8), iterations = 1)
     boundary_image = cv2.erode(boundary_image, np.ones((7,7),np.uint8), iterations = 1)
     boundary_image = cv2.dilate(boundary_image, np.ones((62,62),np.uint8), iterations = 1)
     boundary_image = cv2.erode(boundary_image, np.ones((60,60),np.uint8), iterations = 1)
-    #boundary_image = cv2.Canny(boundary_image, 60,100)
     boundary_image = np.float32(cv2.cvtColor(boundary_image, cv2.COLOR_BGR2GRAY))
+
+    #Find the corners boundaries of the gameboard
     boundary_image = cv2.cornerHarris(boundary_image, 10, 9, 0.04)
     aux = np.copy(boundary_image)
     aux[boundary_image<250]=0
     aux[boundary_image<200]=255
     boundary_image = cv2.dilate(boundary_image,None)
-    # Loop over the image in vertical bars of width x
-    #take the smallest and the higest positions wich are 255
-    #do the same in horizontal bars of height x
-    # the smalles of both is the point1 and the highest of both is the point2
+
+    # Get the coordinates of the gameboard corners
     points = np.argwhere(boundary_image>100)
     p1 = [min(points[:,0]),min(points[:,1])]
     p2 = [max(points[:,0]),max(points[:,1])]
 
     print p1, p2
 
+    # Cut the gameboard in a 15x15 matrix
     xy_window = ((p2[0]-p1[0])/15, 
                  (p2[0]-p1[0])/15)
+
+    # Only split the gameboard
     x_start_stop = [p1[1],p2[1]]
     y_start_stop = [p1[0],p2[0]]
+
+    #Generate the windows
     windows = slide_window(image, 
             x_start_stop=x_start_stop,
             y_start_stop=y_start_stop,
             xy_window=xy_window, 
             xy_overlap=(0, 0))
     image_analize = np.copy(image)
-    results = []
-    count = 0
+    results = [[]]
+    row = 0
+    column = 0
     for window in windows:
         window_image = image_analize[window[0][1]:window[1][1],window[0][0]:window[1][0]]
         if(window_image.shape[0] >= xy_window[0] and window_image.shape[1] >= xy_window[1]):
             window_image = cv2.resize(window_image, (24, 24))
             test_prediction = model.predict(window_image[None, :, :, :])
-            print test_prediction, window
-            #random.seed(np.argmax(test_prediction))
-            c = colors[np.argmax(test_prediction)]
-            #im = Image.fromarray(window_image)
-            #im.save("your_file{}.jpeg".format(count))
-            count +=1
-            image_analize = cv2.rectangle(image_analize, window[0], window[1], c, -1)
-            '''if test_prediction != 0:
-                image = cv2.rectangle(image,(window[0][0], window[0][1]),(window[1][0],window[1][1]),(0,0,255),2) 
-                heat_boxes.append([(window[0][0], window[0][1]),(window[1][0],window[1][1])])'''
-    heatmap = add_heat(heatmap, heat_boxes)
-    heatmap = apply_threshold(heatmap, 1)
-    image_analize = draw_boxes(image_analize, windows, color=(0, 255, 0), thick=2)
-    print results
-    return image_analize, heatmap
-
-def add_heat(heatmap, bbox_list):
-    # Iterate through list of bboxes
-    for box in bbox_list:
-        # Add += 1 for all pixels inside each bbox
-        # Assuming each "box" takes the form ((x1, y1), (x2, y2))
-        heatmap[box[0][1]:box[1][1], box[0][0]:box[1][0]] += 1
-
-    # Return updated heatmap
-    return heatmap# Iterate through list of bboxes
-    
-def apply_threshold(heatmap, threshold):
-    # Zero out pixels below the threshold
-    heatmap[heatmap <= threshold] = 0
-    # Return thresholded map
-    return heatmap
-
-def draw_labeled_bboxes(img, labels):
-    # Iterate through all detected cars
-    for car_number in range(1, labels[1]+1):
-        # Find pixels with each car_number label value
-        nonzero = (labels[0] == car_number).nonzero()
-        # Identify x and y values of those pixels
-        nonzeroy = np.array(nonzero[0])
-        nonzerox = np.array(nonzero[1])
-        # Define a bounding box based on min/max x and y
-        bbox = ((np.min(nonzerox), np.min(nonzeroy)), (np.max(nonzerox), np.max(nonzeroy)))
-        # Draw the box on the image
-        cv2.rectangle(img, bbox[0], bbox[1], (0,0,255), 6)
-    # Return the image
-    return img
+            #print test_prediction, window
+            if return_image:
+                c = colors[np.argmax(test_prediction)]
+                image_analize = cv2.rectangle(image_analize, window[0], window[1], c, -1)
+            else:
+                results[row].append(np.argmax(test_prediction))
+                column += 1
+            if not column % 15:
+                results.append([])
+                row += 1
+                column = 0
+    if return_image:
+        image_analize = draw_boxes(image_analize, windows, color=(0, 255, 0), thick=2)
+        return image_analize
+    else:
+        results.pop()
+        return results
 
 def test_images(origin):
     image_names = glob.glob(origin)
@@ -169,13 +150,8 @@ def test_images(origin):
         i += 1
         image = cv2.imread(name)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        cars_image = np.copy(image)
-        #image = find_cars(image,(400,656), 1, svc, X_scaler, 9, 8, 2,(16, 16), 16)
-        image, heatmap = detect_car(image)
-        labels = label(heatmap)
-        cars_image = draw_labeled_bboxes(cars_image, labels)
-        plt.imshow(image, cmap='gray')
-        plt.pause(50)
+        print detect_objects(image, False)
+        #plt.imshow(image, cmap='gray')
+        #plt.pause(50)
 
-test_images('/home/esteve/chipi-juego/examples/WhatsApp Image 2017-09-13 at 22.03.23(1).jpeg')
-#process_video('project_video.mp4')
+test_images('/home/esteve/chipi-juego/examples/*')
