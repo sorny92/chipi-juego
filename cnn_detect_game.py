@@ -5,7 +5,7 @@ import pickle
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from extra_function import *
-from keras.models import load_model
+from keras.models import *
 from scipy.ndimage.measurements import label
 import os
 import random
@@ -14,7 +14,9 @@ from PIL import Image
 # ONLY CPU
 os.environ['CUDA_VISIBLE_DEVICES'] = ''
 
-model = load_model('model.h5')
+json_string = open('model.json','r').read()
+model = model_from_json(json_string)
+model.load_weights('model.h5')
 
 # Define a function that takes an image,
 # start and stop positions in both x and y, 
@@ -99,7 +101,7 @@ def detect_objects(image, return_image=False):
     p1 = [min(points[:,0]),min(points[:,1])]
     p2 = [max(points[:,0]),max(points[:,1])]
 
-    print p1, p2
+    print (p1, p2)
 
     # Cut the gameboard in a 15x15 matrix
     xy_window = ((p2[0]-p1[0])/15, 
@@ -150,7 +152,7 @@ def test_images(origin):
         i += 1
         image = cv2.imread(name)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        print detect_objects(image, False)
+        print (detect_objects(image, False))
         #plt.imshow(image, cmap='gray')
         #plt.pause(50)
 

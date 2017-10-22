@@ -122,4 +122,7 @@ model.fit(X_train, y_train, batch_size = BATCH_SIZE, epochs=EPOCHS, validation_s
 score = model.evaluate(X_test, y_test, batch_size=BATCH_SIZE)
 print (score)
 #print (model.predict(X_test[1,:]))
-model.save('model.h5')
+model.save_weights('model.h5')
+f = open('model.json','w')
+f.write(model.to_json())
+f.close()
