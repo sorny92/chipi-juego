@@ -75,10 +75,14 @@ def detect_objects(image, return_image=False):
     colors = [(0,0,0), (0,0,125), (200,200,0), (255,255,255), (0,255,0), (0,255,255)]
 
     # Threshold to get the outer color of the game
-    lower = np.array([75,130,140], dtype = "uint8")
+    # 66,129,134
+    # 64,125,125
+    lower = np.array([63,125,125], dtype = "uint8")
     upper = np.array([85,144,150], dtype = "uint8")
     mask = cv2.inRange(image, lower, upper)
 
+    plt.imshow(mask, cmap='hot')
+    plt.pause(5)
     # Create binay mask
     boundary_image = cv2.bitwise_and(image, image, mask=mask)
 
@@ -88,7 +92,6 @@ def detect_objects(image, return_image=False):
     boundary_image = cv2.dilate(boundary_image, np.ones((62,62),np.uint8), iterations = 1)
     boundary_image = cv2.erode(boundary_image, np.ones((60,60),np.uint8), iterations = 1)
     boundary_image = np.float32(cv2.cvtColor(boundary_image, cv2.COLOR_BGR2GRAY))
-
     #Find the corners boundaries of the gameboard
     boundary_image = cv2.cornerHarris(boundary_image, 10, 9, 0.04)
     aux = np.copy(boundary_image)
@@ -121,15 +124,19 @@ def detect_objects(image, return_image=False):
     results = [[]]
     row = 0
     column = 0
+    import random
+    iden = random.randint(1, 2000)
     for window in windows:
         window_image = image_analize[window[0][1]:window[1][1],window[0][0]:window[1][0]]
+        #Image.fromarray(window_image).save('./images/image{}{}{}.jpg'.format(iden,row,column))
         if(window_image.shape[0] >= xy_window[0] and window_image.shape[1] >= xy_window[1]):
             window_image = cv2.resize(window_image, (24, 24))
             test_prediction = model.predict(window_image[None, :, :, :])
             #print test_prediction, window
             if return_image:
                 c = colors[np.argmax(test_prediction)]
-                image_analize = cv2.rectangle(image_analize, window[0], window[1], c, -1)
+                #image_analize = cv2.rectangle(image_analize, window[0], window[1], c, -1)
+                image_analize[window[0][1]:window[1][1],window[0][0]:window[1][0]] += c
             else:
                 results[row].append(np.argmax(test_prediction))
                 column += 1
@@ -142,6 +149,7 @@ def detect_objects(image, return_image=False):
         return image_analize
     else:
         results.pop()
+        print (results)
         return results
 
 def test_images(origin):
@@ -152,8 +160,8 @@ def test_images(origin):
         i += 1
         image = cv2.imread(name)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        print (detect_objects(image, False))
-        #plt.imshow(image, cmap='gray')
-        #plt.pause(50)
+        image = detect_objects(image, True)
+        plt.imshow(image, cmap='hot')
+        plt.pause(5)
 
-test_images('/home/esteve/chipi-juego/examples/*')
+test_images('/home/esteve/chipi-juego/moar_data/*')

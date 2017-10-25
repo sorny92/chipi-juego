@@ -10,7 +10,7 @@ import tensorflow as tf
 from keras.models import Sequential
 from keras.layers import Flatten, Dense, Conv2D, Dropout, MaxPooling2D, Activation, Lambda, Cropping2D, GaussianNoise
 from keras.preprocessing.image import ImageDataGenerator
-
+from keras.optimizers import Adagrad
 from sklearn.model_selection import train_test_split
 
 images_background = glob.glob('./images/background/*')
@@ -19,28 +19,31 @@ images_ball = glob.glob('./images/ball/*')
 images_box = glob.glob('./images/box/*')
 images_hole = glob.glob('./images/hole/*')
 images_rock = glob.glob('./images/rock/*')
+images_teleport = glob.glob('./images/teleport/*')
+
 background_features = []
 background_blue_features = []
 ball_features = []
 box_features = []
 hole_features = []
 rock_features = []
+teleport_features = []
+
 images = []
 labels = []
-for name in images_background:
-    image = cv2.imread(name)
-    image = cv2.resize(image, (24,24))
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    background_features.append(image)
-    labels.append(0)
 
 for name in images_background_blue:
     image = cv2.imread(name)
     image = cv2.resize(image, (24,24))
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     background_blue_features.append(image)
+    labels.append(0)
+for name in images_background:
+    image = cv2.imread(name)
+    image = cv2.resize(image, (24,24))
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    background_features.append(image)
     labels.append(1)
-    
 for name in images_ball:
     image = cv2.imread(name)
     image = cv2.resize(image, (24,24))
@@ -65,6 +68,13 @@ for name in images_rock:
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     rock_features.append(image)
     labels.append(5)
+for name in images_teleport:
+    image = cv2.imread(name)
+    image = cv2.resize(image, (24,24))
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    teleport_features.append(image)
+    labels.append(6)
+
 from keras.utils.np_utils import to_categorical
 y = to_categorical(labels)
 print(len(background_features))
@@ -74,16 +84,17 @@ print(len(box_features))
 print(len(hole_features))
 print(len(rock_features))
 
-X = np.vstack((background_features, background_blue_features,
-              ball_features, box_features, hole_features, rock_features)).astype(np.float64)
+X = np.vstack((background_blue_features, background_features,
+              ball_features, box_features, hole_features, 
+              rock_features, teleport_features)).astype(np.float64)
 print(X.shape)
 print(y.shape)
 X, y = sklearn.utils.shuffle(X, y)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
-BATCH_SIZE = 12
-EPOCHS = 50
+BATCH_SIZE = 128
+EPOCHS = 200
 
 ch, row, col = 3, 24, 24
 
@@ -106,18 +117,19 @@ model.add(Activation('relu'))
 model.add(Conv2D(64, (3, 3)))
 model.add(Activation('relu'))
 
-model.add(Conv2D(64, (3, 3), strides=(2,2)))
+model.add(Conv2D(72, (3, 3), strides=(2,2)))
 model.add(Activation('relu'))
 
 model.add(Flatten())
-model.add(Dense(60))
+model.add(Dense(94))
 model.add(Dropout(0.4))
-model.add(Dense(20))
+model.add(Dense(22))
 model.add(Dropout(0.4))
-model.add(Dense(6))
+model.add(Dense(7))
 model.add(Activation('relu'))
 
-model.compile(loss='categorical_crossentropy', optimizer='adam')
+adagrad = Adagrad(lr=0.001)
+model.compile(loss='categorical_crossentropy', optimizer=adagrad)
 model.fit(X_train, y_train, batch_size = BATCH_SIZE, epochs=EPOCHS, validation_split=0.2)
 score = model.evaluate(X_test, y_test, batch_size=BATCH_SIZE)
 print (score)
