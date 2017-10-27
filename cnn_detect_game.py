@@ -72,7 +72,7 @@ def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
     return imcopy
 
 def detect_objects(image, return_image=False):
-    colors = [(0,0,0), (0,0,125), (200,200,0), (255,255,255), (0,255,0), (0,255,255)]
+    colors = [(0,0,0), (255,255,255), (255,0,0), (200,200,0),(0,255,0), (127,127,127), (0,200,200)]
 
     # Threshold to get the outer color of the game
     # 66,129,134
@@ -82,7 +82,7 @@ def detect_objects(image, return_image=False):
     mask = cv2.inRange(image, lower, upper)
 
     plt.imshow(mask, cmap='hot')
-    plt.pause(5)
+    plt.pause(1)
     # Create binay mask
     boundary_image = cv2.bitwise_and(image, image, mask=mask)
 
@@ -135,8 +135,10 @@ def detect_objects(image, return_image=False):
             #print test_prediction, window
             if return_image:
                 c = colors[np.argmax(test_prediction)]
-                #image_analize = cv2.rectangle(image_analize, window[0], window[1], c, -1)
-                image_analize[window[0][1]:window[1][1],window[0][0]:window[1][0]] += c
+                image_analize = cv2.rectangle(image_analize, window[0], window[1], c, -1)
+                '''image_analize[window[0][1]:window[1][1],window[0][0]:window[1][0],0] += c[0]
+                image_analize[window[0][1]:window[1][1],window[0][0]:window[1][0],1] += c[1]
+                image_analize[window[0][1]:window[1][1],window[0][0]:window[1][0],2] += c[2]'''
             else:
                 results[row].append(np.argmax(test_prediction))
                 column += 1
@@ -146,6 +148,7 @@ def detect_objects(image, return_image=False):
                 column = 0
     if return_image:
         image_analize = draw_boxes(image_analize, windows, color=(0, 255, 0), thick=2)
+        image_analize = np.hstack((image,image_analize))
         return image_analize
     else:
         results.pop()
@@ -164,4 +167,4 @@ def test_images(origin):
         plt.imshow(image, cmap='hot')
         plt.pause(5)
 
-test_images('/home/esteve/chipi-juego/moar_data/*')
+test_images('/home/esteve/chipi-juego/examples/*')

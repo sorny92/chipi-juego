@@ -10,16 +10,16 @@ import tensorflow as tf
 from keras.models import Sequential
 from keras.layers import Flatten, Dense, Conv2D, Dropout, MaxPooling2D, Activation, Lambda, Cropping2D, GaussianNoise
 from keras.preprocessing.image import ImageDataGenerator
-from keras.optimizers import Adagrad
+from keras.optimizers import *
 from sklearn.model_selection import train_test_split
 
-images_background = glob.glob('./images/background/*')
-images_background_blue = glob.glob('./images/background_blue/*')
-images_ball = glob.glob('./images/ball/*')
-images_box = glob.glob('./images/box/*')
-images_hole = glob.glob('./images/hole/*')
-images_rock = glob.glob('./images/rock/*')
-images_teleport = glob.glob('./images/teleport/*')
+images_background = glob.glob('./images_old/background/*')
+images_background_blue = glob.glob('./images_old/background_blue/*')
+images_ball = glob.glob('./images_old/ball/*')
+images_box = glob.glob('./images_old/box/*')
+images_hole = glob.glob('./images_old/hole/*')
+images_rock = glob.glob('./images_old/rock/*')
+images_teleport = glob.glob('./images_old/teleport/*')
 
 background_features = []
 background_blue_features = []
@@ -93,8 +93,8 @@ X, y = sklearn.utils.shuffle(X, y)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
-BATCH_SIZE = 128
-EPOCHS = 200
+BATCH_SIZE = 512
+EPOCHS = 500
 
 ch, row, col = 3, 24, 24
 
@@ -121,15 +121,19 @@ model.add(Conv2D(72, (3, 3), strides=(2,2)))
 model.add(Activation('relu'))
 
 model.add(Flatten())
-model.add(Dense(94))
+model.add(Dense(512))
 model.add(Dropout(0.4))
-model.add(Dense(22))
+model.add(Dense(1024))
+model.add(Dropout(0.4))
+model.add(Dense(2048))
+model.add(Dropout(0.4))
+model.add(Dense(256))
 model.add(Dropout(0.4))
 model.add(Dense(7))
 model.add(Activation('relu'))
 
 adagrad = Adagrad(lr=0.001)
-model.compile(loss='categorical_crossentropy', optimizer=adagrad)
+model.compile(loss='categorical_crossentropy', optimizer=adagrad,metrics=['accuracy'])
 model.fit(X_train, y_train, batch_size = BATCH_SIZE, epochs=EPOCHS, validation_split=0.2)
 score = model.evaluate(X_test, y_test, batch_size=BATCH_SIZE)
 print (score)
